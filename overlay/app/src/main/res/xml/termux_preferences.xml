@@ -1,0 +1,40 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Termux Plus: built-in terminal customization -->
+    <PreferenceCategory
+        app:key="termux_plus"
+        app:title="@string/termux_plus_preferences_header">
+
+        <Preference
+            app:key="termux_plus_color_scheme"
+            app:title="@string/termux_plus_color_scheme_title"
+            app:summary="@string/termux_plus_color_scheme_summary" />
+
+        <Preference
+            app:key="termux_plus_reset_colors"
+            app:title="@string/termux_plus_reset_colors_title"
+            app:summary="@string/termux_plus_reset_colors_summary" />
+
+        <Preference
+            app:key="termux_plus_cli_info"
+            app:title="@string/termux_plus_cli_info_title"
+            app:summary="@string/termux_plus_cli_info_summary" />
+
+    </PreferenceCategory>
+
+    <Preference
+        app:title="@string/termux_debugging_preferences_title"
+        app:summary="@string/termux_debugging_preferences_summary"
+        app:fragment="com.termux.app.fragments.settings.termux.DebuggingPreferencesFragment"/>
+
+    <Preference
+        app:title="@string/termux_terminal_io_preferences_title"
+        app:summary="@string/termux_terminal_io_preferences_summary"
+        app:fragment="com.termux.app.fragments.settings.termux.TerminalIOPreferencesFragment"/>
+
+    <Preference
+        app:title="@string/termux_terminal_view_preferences_title"
+        app:summary="@string/termux_terminal_view_preferences_summary"
+        app:fragment="com.termux.app.fragments.settings.termux.TerminalViewPreferencesFragment"/>
+
+</PreferenceScreen>

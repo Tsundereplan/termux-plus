@@ -1,0 +1,69 @@
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# start-desktop — launch the XFCE desktop through Termux:X11
+#
+# Prerequisites (installed by setup/install-termux-plus.sh):
+#   pkg install x11-repo xfce4 termux-x11-nightly
+#   + the Termux:X11 companion Android app:
+#     https://f-droid.org/en/packages/com.termux.x11/
+#     https://github.com/termux/termux-x11/releases
+#
+# How it works (quick lesson):
+#   Termux:X11 is a separate Android app that acts as a *display* for Termux.
+#   This script starts the termux-x11 display bridge in the background
+#   (that is the "X server" part), then launches the XFCE desktop session
+#   with DISPLAY=:0 so all desktop apps draw into the Termux:X11 app window.
+
+set -u
+
+# --- sanity checks ----------------------------------------------------------
+
+if ! command -v termux-x11 >/dev/null 2>&1; then
+    echo "termux-x11 is not installed. Fix with:"
+    echo "  pkg install x11-repo && pkg install termux-x11-nightly"
+    exit 1
+fi
+
+if ! command -v startxfce4 >/dev/null 2>&1; then
+    echo "XFCE is not installed. Fix with:"
+    echo "  pkg install x11-repo && pkg install xfce4"
+    exit 1
+fi
+
+if [ -x /system/bin/pm ] && ! /system/bin/pm list packages 2>/dev/null | grep -q 'com.termux.x11'; then
+    echo "WARNING: the Termux:X11 companion app does not seem to be installed."
+    echo "         The screen will stay black without it. Install it from:"
+    echo "         https://f-droid.org/en/packages/com.termux.x11/"
+    echo ""
+    if command -v termux-open-url >/dev/null 2>&1; then
+        printf 'Continue anyway? [y/N] '
+        read -r answer || answer="n"
+        case "$answer" in
+            [Yy]*) ;;
+            *) exit 1 ;;
+        esac
+    fi
+fi
+
+# --- optional audio ---------------------------------------------------------
+# Start PulseAudio once per boot for desktop sound (if installed).
+if command -v pulseaudio >/dev/null 2>&1 && ! pulseaudio --check 2>/dev/null; then
+    pulseaudio --start --exit-idle-time=-1 2>/dev/null || true
+fi
+
+# --- launch -----------------------------------------------------------------
+
+echo "Starting Termux:X11 display..."
+termux-x11 :0 &
+
+# Give the display a moment to come up before the desktop connects to it.
+sleep 2
+
+echo "Starting XFCE desktop (DISPLAY=:0)..."
+echo "Tip: switch back to this terminal anytime; 'exit' here closes the desktop."
+DISPLAY=:0 dbus-launch --exit-with-session startxfce4
+
+# Clean up the background display bridge when the session ends.
+rc=$?
+pkill -f 'termux-x11 :0' 2>/dev/null || true
+exit $rc

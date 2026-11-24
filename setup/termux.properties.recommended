@@ -1,0 +1,36 @@
+# ~/.termux/termux.properties — Termux Plus recommended config
+# ---------------------------------------------------------------------------
+# Termux reads this file at runtime. After editing it, run:
+#     termux-reload-settings
+# Full documentation:
+#     https://github.com/termux/termux-app/wiki/termux-properties
+# ---------------------------------------------------------------------------
+
+# --- Extra keys row (the toolbar above the keyboard) -----------------------
+# Two rows: navigation/editing keys + arrows. Long-press KEY for variants
+# (e.g. long-press '-' for F-keys). Swipe or long-press the toolbar to swap
+# between keys and a text input line.
+extra-keys = [ \
+  ['ESC','/','-','HOME','UP','END','PGUP'], \
+  ['TAB','CTRL','ALT','LEFT','DOWN','RIGHT','PGDN'] \
+]
+
+# Style of the extra keys: default | arrows-only | arrows-all | all | none
+extra-keys-style = arrows-all
+
+# --- Terminal behaviour ------------------------------------------------------
+# Silence the bell (options: ignore | vibrate | beep)
+bell-character = ignore
+
+# Force the dark UI theme regardless of system settings (true | false)
+use-black-ui = true
+
+# --- Small quality-of-life extras -------------------------------------------
+# Uncomment to start each session in ~/downloads instead of ~ :
+# default-working-directory = /data/data/com.termux/files/home/downloads
+
+# Uncomment for a bigger terminal toolbar (e.g. 1.5, 2.0):
+# terminal-toolbar-height = 1.2
+
+# Uncomment to enable full screen mode:
+# fullscreen = true

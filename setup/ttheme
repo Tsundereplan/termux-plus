@@ -1,0 +1,140 @@
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# ttheme — Termux Plus terminal color scheme switcher
+#
+#   ttheme               interactive picker (arrow keys not needed, just numbers)
+#   ttheme <name>        apply a scheme instantly
+#   ttheme -l | list     list all installed schemes
+#   ttheme -c | current  show the current scheme
+#   ttheme -r | reset    remove colors.properties -> built-in default colors
+#
+# Schemes live in ~/.termux/termux-plus/themes/*.properties
+# (same format the Termux:Styling app uses). Add your own .properties files
+# there and they show up automatically!
+
+set -u
+
+THEMES_DIR="${HOME}/.termux/termux-plus/themes"
+COLORS_FILE="${HOME}/.termux/colors.properties"
+
+# --- helpers ----------------------------------------------------------------
+
+usage() {
+    sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+list_themes() {
+    ls -1 "$THEMES_DIR" 2>/dev/null | grep '\.properties$' | sed 's/\.properties$//' | sort
+}
+
+current_theme() {
+    if [ ! -f "$COLORS_FILE" ]; then
+        echo "(Termux default)"
+        return
+    fi
+    local cur
+    cur="$(sed -n 's/^# termux-plus-theme: //p' "$COLORS_FILE" | head -n 1)"
+    [ -z "$cur" ] && cur="(custom colors.properties)"
+    echo "$cur"
+}
+
+# read one value from a colors file: get_value <file> <key>
+get_value() {
+    sed -n "s/^$2=//p" "$1" 2>/dev/null | head -n 1 | tr -d ' \r'
+}
+
+# print one truecolor block from a #rrggbb value
+block() {
+    local h="${1#\#}"
+    [ ${#h} -ne 6 ] && { printf '  '; return; }
+    printf '\033[48;2;%d;%d;%dm  \033[0m' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
+}
+
+# show a live swatch preview of a colors file
+preview() {
+    local file="$1" key val line=""
+    for key in background color1 color2 color3 color4 color5 color6 color7; do
+        val="$(get_value "$file" "$key")"
+        [ -n "$val" ] && line="${line}$(block "$val")"
+    done
+    line="${line} "
+    local fg h
+    fg="$(get_value "$file" "foreground")"
+    if [ -n "$fg" ]; then
+        h="${fg#\#}"
+        if [ ${#h} -eq 6 ]; then
+            line="${line}\033[38;2;$(printf '%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}")mtext\033[0m"
+        fi
+    fi
+    printf '%b\n' "$line"
+}
+
+apply_theme() {
+    local name="$1"
+    if [ ! -f "$THEMES_DIR/$name.properties" ]; then
+        echo "No such theme: $name" >&2
+        echo "Installed themes:" >&2
+        list_themes >&2
+        exit 1
+    fi
+    cp -f "$THEMES_DIR/$name.properties" "$COLORS_FILE"
+    termux-reload-settings 2>/dev/null || true
+    echo "Theme applied: $name"
+    preview "$COLORS_FILE"
+    echo "Not happy? Run 'ttheme' again or 'ttheme -r' to reset."
+}
+
+# --- main -------------------------------------------------------------------
+
+case "${1:-}" in
+    -l|list|--list)
+        echo "Installed color schemes (current: $(current_theme)):"
+        echo ""
+        local_names="$(list_themes)"
+        if [ -z "$local_names" ]; then
+            echo "  (none found in $THEMES_DIR)"
+            exit 0
+        fi
+        for name in $local_names; do
+            marker="  "
+            [ "$name" = "$(current_theme)" ] && marker="> "
+            printf '%s %-22s' "$marker" "$name"
+            preview "$THEMES_DIR/$name.properties"
+        done
+        ;;
+    -c|current|--current)
+        current_theme
+        ;;
+    -r|reset|--reset)
+        rm -f "$COLORS_FILE"
+        termux-reload-settings 2>/dev/null || true
+        echo "Removed colors.properties — back to Termux built-in colors."
+        ;;
+    -h|help|--help|"")
+        usage
+        if [ "${1:-}" = "" ]; then
+            # interactive picker
+            echo ""
+            echo "Current theme: $(current_theme)"
+            echo ""
+            local_names="$(list_themes)"
+            [ -z "$local_names" ] && { echo "No themes installed in $THEMES_DIR"; exit 0; }
+            i=1
+            for name in $local_names; do
+                printf '  %2d) %-22s' "$i" "$name"
+                preview "$THEMES_DIR/$name.properties"
+                i=$((i + 1))
+            done
+            echo ""
+            printf 'Pick a number (blank = keep current): '
+            read -r choice || exit 0
+            [ -z "$choice" ] && exit 0
+            picked="$(echo "$local_names" | sed -n "${choice}p")"
+            [ -z "$picked" ] && { echo "Invalid choice."; exit 1; }
+            apply_theme "$picked"
+        fi
+        ;;
+    *)
+        apply_theme "$1"
+        ;;
+esac

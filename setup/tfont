@@ -1,0 +1,135 @@
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# tfont — Termux Plus terminal font switcher
+#
+#   tfont                interactive font picker
+#   tfont <name>         install & apply a Nerd Font
+#   tfont <file.ttf>     install any .ttf you have on disk
+#   tfont -l | list      list available fonts
+#   tfont -r | reset     remove font.ttf -> Termux built-in font
+#
+# Fonts are downloaded from the official ryanoasis/nerd-fonts releases.
+
+set -u
+
+FONT_FILE_PATH="${HOME}/.termux/font.ttf"
+FONT_TMP="${TMPDIR:-/data/data/com.termux/files/usr/tmp}/tfont"
+
+# name|zip-url|preferred-ttf-inside-zip
+FONT_CATALOG="
+meslo|https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip|MesloLGSNerdFont-Regular.ttf
+jetbrains-mono|https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip|JetBrainsMonoNerdFont-Regular.ttf
+cascadia-code|https://github.com/ryanoasis/nerd-fonts/releases/latest/download/CascadiaCode.zip|CascadiaCodeNerdFont-Regular.ttf
+fira-code|https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip|FiraCodeNerdFont-Regular.ttf
+hack|https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.zip|HackNerdFont-Regular.ttf
+roboto-mono|https://github.com/ryanoasis/nerd-fonts/releases/latest/download/RobotoMono.zip|RobotoMonoNerdFont-Regular.ttf
+"
+
+usage() {
+    sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+font_names() {
+    echo "$FONT_CATALOG" | grep -v '^$' | cut -d'|' -f1
+}
+
+font_line() {  # font_line <name> -> echoes the matching catalog line
+    echo "$FONT_CATALOG" | grep -v '^$' | grep "^$1|" | head -n 1
+}
+
+apply_installed() {  # apply_installed <path-to-ttf>
+    mkdir -p "${HOME}/.termux"
+    cp -f "$1" "$FONT_FILE_PATH"
+    termux-reload-settings 2>/dev/null || true
+    echo "Font installed: $(basename "$1") -> ~/.termux/font.ttf"
+    echo "It applies immediately. Revert anytime with: tfont -r"
+}
+
+install_from_catalog() {
+    local name="$1"
+    local line
+    line="$(font_line "$name")"
+    if [ -z "$line" ]; then
+        echo "Unknown font: $name" >&2
+        echo "Available:" >&2
+        font_names >&2
+        exit 1
+    fi
+    local url ttf
+    url="$(echo "$line" | cut -d'|' -f2)"
+    ttf="$(echo "$line" | cut -d'|' -f3)"
+
+    echo "Downloading $name ..."
+    rm -rf "$FONT_TMP"
+    mkdir -p "$FONT_TMP/extracted"
+    curl -fL --retry 3 -o "$FONT_TMP/font.zip" "$url" || {
+        echo "Download failed — check your internet connection." >&2
+        rm -rf "$FONT_TMP"
+        exit 1
+    }
+    unzip -o -q "$FONT_TMP/font.zip" -d "$FONT_TMP/extracted" || {
+        echo "Could not unzip the downloaded font." >&2
+        rm -rf "$FONT_TMP"
+        exit 1
+    }
+    local picked
+    picked="$(cd "$FONT_TMP/extracted" && ls "$ttf" 2>/dev/null | head -n 1)"
+    [ -z "$picked" ] && picked="$(cd "$FONT_TMP/extracted" && ls *Regular*.ttf 2>/dev/null | head -n 1)"
+    [ -z "$picked" ] && picked="$(cd "$FONT_TMP/extracted" && ls *.ttf 2>/dev/null | head -n 1)"
+    if [ -z "$picked" ]; then
+        echo "No .ttf file found inside the archive." >&2
+        rm -rf "$FONT_TMP"
+        exit 1
+    fi
+    apply_installed "$FONT_TMP/extracted/$picked"
+    rm -rf "$FONT_TMP"
+}
+
+case "${1:-}" in
+    -l|list|--list)
+        echo "Fonts available to install:"
+        echo ""
+        font_names | sed 's/^/  /'
+        echo ""
+        if [ -f "$FONT_FILE_PATH" ]; then
+            echo "Custom font currently installed: ~/.termux/font.ttf"
+        else
+            echo "Currently using the Termux built-in font."
+        fi
+        ;;
+    -r|reset|--reset)
+        rm -f "$FONT_FILE_PATH"
+        termux-reload-settings 2>/dev/null || true
+        echo "Removed font.ttf — back to the Termux built-in font."
+        ;;
+    -h|help|--help)
+        usage
+        ;;
+    "")
+        usage
+        echo ""
+        echo "Pick a font to install:"
+        echo ""
+        names="$(font_names)"
+        i=1
+        for n in $names; do
+            printf '  %2d) %s\n' "$i" "$n"
+            i=$((i + 1))
+        done
+        echo ""
+        printf 'Choice (blank = cancel): '
+        read -r choice || exit 0
+        [ -z "$choice" ] && exit 0
+        picked="$(echo "$names" | sed -n "${choice}p")"
+        [ -z "$picked" ] && { echo "Invalid choice."; exit 1; }
+        install_from_catalog "$picked"
+        ;;
+    *)
+        if [ -f "$1" ]; then
+            # a path to a ttf on disk
+            apply_installed "$1"
+        else
+            install_from_catalog "$1"
+        fi
+        ;;
+esac

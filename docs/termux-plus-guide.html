@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Termux Plus — User Guide</title>
+<script>
+/* This document contains literal terminal prompt characters ($), not LaTeX math.
+   Declare a no-op math renderer so the PDF pipeline skips KaTeX processing. */
+function renderMathInElement() {}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Page & base ============ */
+@page { size: 720px 1020px; margin: 0; }
+:root {
+  --bg: #1a1b26;        /* Tokyo Night background — the product's default theme */
+  --text: #c0caf5;      /* foreground */
+  --accent: #7aa2f7;    /* blue accent */
+  --muted: #565f89;     /* comment gray */
+  --surface: #24283b;   /* cards, code blocks */
+}
+html, body {
+  margin: 0; padding: 0;
+  width: 720px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-size: 15px;
+  line-height: 1.62;
+}
+@media screen {
+  html { height: auto; display: flex; justify-content: center; background: #0d0e14; }
+  body { margin: 20px auto; box-shadow: 0 0 60px rgba(0,0,0,0.5); }
+}
+p, li, td, .code { overflow-wrap: break-word; word-break: break-word; }
+p { margin: 0 0 11px; }
+strong { color: #d9e2fb; font-weight: 700; }
+a { color: var(--accent); text-decoration: none; }
+
+/* ============ Cover ============ */
+.cover {
+  width: 720px; height: 1020px; box-sizing: border-box;
+  break-after: page; overflow: hidden; position: relative;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 64px 0 104px;
+}
+.cv-glow {
+  position: absolute; inset: 0; z-index: 1;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(122,162,247,0.10), transparent 42%),
+    radial-gradient(circle at 86% 88%, rgba(122,162,247,0.06), transparent 38%);
+}
+.cv-vline {
+  position: absolute; left: 58px; top: 205px; bottom: 255px; width: 3px;
+  background: var(--accent); z-index: 2;
+}
+.cv-inner { position: relative; z-index: 3; }
+.cv-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; letter-spacing: 5px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 26px;
+}
+.cv-title {
+  font-size: 68px; font-weight: 900; line-height: 1.08;
+  color: #e6edff; margin-bottom: 8px; letter-spacing: -1px;
+}
+.cv-title .dollar { color: var(--accent); display: inline-block; line-height: 1.08; }
+.cv-subtitle {
+  font-size: 17px; font-weight: 500; color: var(--accent); margin-bottom: 30px;
+}
+.cv-summary {
+  font-size: 15.5px; line-height: 1.7; color: rgba(192,202,245,0.85);
+  max-width: 470px; margin-bottom: 40px;
+}
+.cv-prompt {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  background: var(--surface); border: 1px solid rgba(122,162,247,0.25);
+  border-radius: 8px; padding: 12px 16px; display: inline-block; max-width: 100%;
+}
+.cv-prompt .p { color: var(--accent); font-weight: 700; }
+.cv-meta {
+  position: absolute; left: 104px; right: 64px; bottom: 72px; z-index: 3;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); letter-spacing: 1px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+
+/* ============ Flowing content ============ */
+.main-content { padding: 56px 64px 40px 64px; }
+.chapter-header { break-after: avoid; break-inside: avoid; margin-top: 26px; }
+.chapter-header.first { margin-top: 0; }
+.sec-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--accent); letter-spacing: 3px; text-transform: uppercase;
+}
+.sec-title { font-size: 24px; font-weight: 800; margin: 5px 0 10px; color: #e6edff; }
+.divider { width: 44px; height: 6px; background: var(--accent); margin-bottom: 15px; }
+
+h4.sub {
+  font-size: 15.5px; font-weight: 700; color: #d9e2fb;
+  margin: 16px 0 8px; break-after: avoid;
+}
+
+/* code blocks */
+.code {
+  break-inside: avoid;
+  background: var(--surface); border-radius: 8px;
+  padding: 12px 15px; margin: 10px 0 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; line-height: 1.6;
+  white-space: pre-wrap; overflow-wrap: break-word;
+}
+.code .p { color: var(--accent); font-weight: 700; }
+.code .cm { color: var(--muted); }
+.k {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.87em;
+  background: rgba(36,40,59,0.9); padding: 1px 6px; border-radius: 4px;
+  color: #c9d6ff; white-space: nowrap;
+}
+
+/* callouts */
+.note {
+  break-inside: avoid;
+  background: var(--surface); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 12px 0 14px;
+  font-size: 14px;
+}
+.note .nt {
+  display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 5px;
+}
+
+/* tables */
+table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 10px 0 16px; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th {
+  background: var(--surface); text-align: left; font-size: 12px;
+  font-weight: 700; letter-spacing: 0.5px; color: #d9e2fb;
+  padding: 8px 10px; border: 1px solid rgba(86,95,137,0.4);
+}
+td {
+  padding: 8px 10px; border: 1px solid rgba(86,95,137,0.4);
+  vertical-align: top; font-size: 13px; line-height: 1.5;
+}
+td.mono, .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+/* theme swatch dots (informational — real theme colors) */
+.sw {
+  display: inline-block; width: 11px; height: 11px; border-radius: 50%;
+  margin-right: 3px; vertical-align: -1px;
+  border: 1px solid rgba(198,208,245,0.3);
+}
+
+/* steps */
+.step { break-inside: avoid; display: flex; gap: 12px; margin-bottom: 10px; }
+.step-n {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface); color: var(--accent);
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.step-b { flex: 1 1 auto; min-width: 0; }
+.step-t { font-weight: 700; color: #d9e2fb; }
+.step-d { font-size: 13.5px; color: rgba(192,202,245,0.9); }
+
+/* command cheat rows */
+.cmdrow { break-inside: avoid; display: flex; gap: 12px; margin-bottom: 7px; font-size: 13px; }
+.cmdrow .c {
+  flex: 0 0 235px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: #c9d6ff; background: var(--surface); border-radius: 6px;
+  padding: 5px 10px; overflow-wrap: break-word;
+}
+.cmdrow .d { flex: 1 1 auto; min-width: 0; color: rgba(192,202,245,0.88); padding-top: 5px; }
+
+ul.tight { margin: 0 0 12px; padding-left: 20px; }
+ul.tight li { margin-bottom: 5px; }
+
+/* ============ Ending ============ */
+.ending {
+  width: 720px; height: 1020px; box-sizing: border-box;
+  break-before: page; overflow: hidden; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 0 90px;
+}
+.end-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(122,162,247,0.09), transparent 46%);
+}
+.end-prompt { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--accent); margin-bottom: 22px; }
+.end-big { font-size: 44px; font-weight: 900; color: #e6edff; line-height: 1.15; margin-bottom: 26px; }
+.end-text { font-size: 14.5px; color: rgba(192,202,245,0.85); max-width: 440px; line-height: 1.7; margin-bottom: 34px; }
+.end-meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);
+  letter-spacing: 1px; line-height: 2; position: relative;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER ==================== -->
+<div class="cover">
+  <div class="cv-glow"></div>
+  <div class="cv-vline"></div>
+  <div class="cv-inner">
+    <div class="cv-kicker">User Guide</div>
+    <div class="cv-title"><span class="dollar">$</span> Termux Plus</div>
+    <div class="cv-subtitle">Your terminal, your way</div>
+    <div class="cv-summary">
+      A personalized Termux build, compiled automatically from the official source on every push.
+      In-app color scheme picker, 12 bundled themes, Nerd Font switching, a Powerlevel10k prompt
+      and a one-command XFCE desktop — this guide takes you from APK to a fully customized setup.
+    </div>
+    <div class="cv-prompt"><span class="p">~$</span> bash setup/install-termux-plus.sh</div>
+  </div>
+  <div class="cv-meta">
+    <span>github.com/Tsundereplan/termux-plus</span>
+    <span>Version 1.0 &middot; November 2026</span>
+  </div>
+</div>
+
+<!-- ==================== CONTENT ==================== -->
+<div class="main-content">
+
+  <!-- ============ 1 · Meet Termux Plus ============ -->
+  <div class="chapter-header first">
+    <div class="sec-tag">Chapter 1</div>
+    <div class="sec-title">Meet Termux Plus</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>Termux Plus is a <strong>personal customization build of Termux</strong> — the popular Android
+  terminal emulator and Linux environment. It is not a fork that drifts away from the official app:
+  instead, the repository stores only a small set of modified files (an <em>overlay</em>) on top of
+  the real <a href="https://github.com/termux/termux-app">termux/termux-app</a> source, and a GitHub
+  Actions workflow clones upstream at a pinned commit, applies the overlay, and compiles the APK on
+  GitHub's servers. Every push produces a fresh, installable build in the Releases tab.</p>
+
+  <p>Why does this matter to you? Because you get real upstream Termux — same engine, same packages,
+  same bootstrap — with the styling and quality-of-life upgrades layered on top. When upstream fixes
+  a bug, the build can pick it up by moving one pinned commit reference (see Chapter 9).</p>
+
+  <table>
+    <colgroup><col style="width:34%"><col style="width:66%"></colgroup>
+    <thead><tr><th>Feature</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">In-app theme picker</td><td>Settings &rarr; Termux &rarr; <strong>Termux Plus</strong> &rarr; Terminal color scheme. Applies instantly, no restart.</td></tr>
+      <tr><td class="mono">12 bundled schemes</td><td>Tokyo Night (default), Dracula, Catppuccin Mocha, Nord, Gruvbox, One Dark, Monokai, Solarized Dark, Ros&eacute; Pine Moon, Ayu Dark, Kanagawa, GitHub Dark.</td></tr>
+      <tr><td class="mono">ttheme</td><td>Switch color schemes from the terminal anytime, with live truecolor swatches.</td></tr>
+      <tr><td class="mono">tfont</td><td>Install and switch between six curated Nerd Fonts — or any <span class="k">.ttf</span> on disk.</td></tr>
+      <tr><td class="mono">start-desktop</td><td>One-command XFCE desktop through Termux:X11, with companion-app detection.</td></tr>
+      <tr><td class="mono">Setup wizard</td><td><span class="k">install-termux-plus.sh</span> — essentials, themes, font, Oh My Zsh + Powerlevel10k prompt and XFCE in six interactive steps.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <span class="nt">Honest scope notes</span>
+    Terminal backgrounds in Termux are a solid color, so the "gradient look" lives in the prompt —
+    Powerlevel10k's colored segments — which the setup configures for you. Native KDE/GNOME are not
+    packaged for Termux; the desktop story here is XFCE (Chapter 8), and heavier desktops are possible
+    later via proot-distro if you ever want them.
+  </div>
+
+  <!-- ============ 2 · Getting the APK ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 2</div>
+    <div class="sec-title">Getting the APK</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>Every push to the repository triggers a build. The finished APKs appear in two places: as
+  per-ABI <strong>artifacts</strong> on the latest Actions run, and on the Releases page under the
+  <strong>continuous</strong> tag ("Termux Plus — Continuous Build"). The release is rebuilt on every
+  push, so the newest build always replaces the old one.</p>
+
+  <h4 class="sub">Which APK should I download?</h4>
+  <table>
+    <colgroup><col style="width:30%"><col style="width:44%"><col style="width:26%"></colgroup>
+    <thead><tr><th>APK suffix</th><th>Works on</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">arm64-v8a</td><td>Modern 64-bit phones (most devices since ~2018)</td><td>Smallest download — recommended</td></tr>
+      <tr><td class="mono">universal</td><td>Everything Android supports</td><td>When in doubt</td></tr>
+      <tr><td class="mono">armeabi-v7a</td><td>Older 32-bit phones</td><td>Legacy devices</td></tr>
+      <tr><td class="mono">x86_64</td><td>Emulators, some Chromebooks</td><td>Testing on a PC</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <span class="nt">Important — read before installing</span>
+    Termux Plus keeps the package name <span class="k">com.termux</span> (the bootstrap binaries
+    hardcode it — see Chapter 3), but it is signed with a different key than the official app.
+    Android will <strong>refuse to install it over the official Termux</strong>. You must uninstall
+    the official Termux app — and the official plugin apps (Termux:API, Boot, Float, Widget, Styling)
+    — first. These builds are debug-signed and meant for personal use.
+  </div>
+
+  <h4 class="sub">Keep your files: back up before uninstalling</h4>
+  <div class="code"><span class="p">$</span> <span class="cm"># run this INSIDE your old Termux, before uninstalling:</span>
+tar -zcf /sdcard/termux-backup.tar.gz -C /data/data/com.termux/files ./home</div>
+  <p>This packs your entire home directory (scripts, configs, projects) into a single archive on
+  shared storage, which survives the uninstall. After Termux Plus is installed and bootstrapped,
+  restore it with:</p>
+  <div class="code"><span class="p">$</span> tar -xzf /sdcard/termux-backup.tar.gz -C /data/data/com.termux/files/home</div>
+
+  <p>A note on <strong>F-Droid vs GitHub builds</strong>: the official Termux on F-Droid is signed
+  by F-Droid's key, and the GitHub release of official Termux by its authors — neither matches this
+  build's key, so switching from either source still requires the uninstall step above. You only go
+  through it once; from then on, newer Termux Plus builds install directly over older ones because
+  the signing key stays the same.</p>
+
+  <!-- ============ 3 · Bootstrap, explained ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 3</div>
+    <div class="sec-title">Bootstrap, explained</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>When you open a freshly installed Termux Plus for the first time, you will see a brief
+  "installing bootstrap" phase before the prompt appears. Here is what actually happens. Android
+  does not let apps ship a full Linux system inside the APK, so the APK only contains a tiny
+  downloader. On first launch it fetches a <strong>bootstrap</strong>: a compressed mini
+  root filesystem — a starter OS containing the <span class="k">apt</span> package manager,
+  coreutils, bash and just enough infrastructure to bootstrap itself.</p>
+
+  <p>That system is unpacked into the app's private storage under a fixed path called
+  <strong>$PREFIX</strong>:</p>
+  <div class="code"><span class="p">$</span> echo $PREFIX
+/data/data/com.termux/files/usr
+<span class="cm">#          everything you install lives inside this tree:</span>
+<span class="cm">#          binaries, libs, /etc, apt lists ... the whole "distro"</span></div>
+
+  <p>Two practical consequences follow. First, every prebuilt Termux package assumes that exact
+  path — which is why Termux Plus <strong>must keep the package name
+  <span class="k">com.termux</span></strong>: the private storage path is derived from the package
+  name, and changing it would break every compiled binary in every package. This is also why the
+  uninstall-first rule from Chapter 2 exists (same name, different signature).</p>
+
+  <p>Second, "customizing the bootstrap" in the literal sense would mean rebuilding thousands of
+  packages. The practical approach — the one Termux Plus takes — is to keep the official bootstrap
+  mechanism untouched and layer a <strong>post-install package set</strong> on top: the setup wizard
+  in Chapter 4 installs the essentials kit, themes, fonts and desktop packages right after
+  bootstrap. Same effect, none of the maintenance burden.</p>
+
+  <div class="note">
+    <span class="nt">Tip</span>
+    The first <span class="k">pkg update</span> after bootstrap downloads fresh package lists and
+    can take a minute on slow mirrors. If downloads fail, run <span class="k">termux-change-repo</span>
+    and switch mirrors — this fixes the vast majority of "package not found" errors.
+  </div>
+
+  <!-- ============ 4 · One-time setup ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 4</div>
+    <div class="sec-title">One-time setup</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>After installing the APK and letting bootstrap finish, clone the repository and run the
+  interactive wizard:</p>
+  <div class="code"><span class="p">$</span> pkg install -y git
+<span class="p">$</span> git clone https://github.com/Tsundereplan/termux-plus.git
+<span class="p">$</span> cd termux-plus
+<span class="p">$</span> bash setup/install-termux-plus.sh</div>
+
+  <p>The script is conservative by design: it asks before every optional step, and it never deletes
+  an existing configuration without saving a backup first (your old <span class="k">~/.zshrc</span>
+  becomes <span class="k">~/.zshrc.termux-plus-backup</span>, for example). The six steps:</p>
+
+  <div class="step"><div class="step-n">1</div><div class="step-b"><div class="step-t">Essentials bootstrap</div>
+    <div class="step-d">Installs the daily-driver kit: <span class="k">git curl wget zip unzip nano openssh termux-api proot-distro zsh</span>. Skippable — you can install these manually later.</div></div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-b"><div class="step-t">Termux Plus commands</div>
+    <div class="step-d">Copies <span class="k">ttheme</span>, <span class="k">tfont</span> and <span class="k">start-desktop</span> into <span class="k">$PREFIX/bin</span> so they work from anywhere.</div></div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-b"><div class="step-t">Color schemes</div>
+    <div class="step-d">Installs all 12 schemes into <span class="k">~/.termux/termux-plus/themes/</span> and applies Tokyo Night — unless you already have a <span class="k">colors.properties</span>, which is kept untouched.</div></div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-b"><div class="step-t">Nerd Font</div>
+    <div class="step-d">Downloads MesloLGS Nerd Font (the font Powerlevel10k recommends) and installs it as <span class="k">~/.termux/font.ttf</span>. An existing custom font is kept.</div></div></div>
+  <div class="step"><div class="step-n">5</div><div class="step-b"><div class="step-t">Prompt upgrade</div>
+    <div class="step-d">Installs Zsh + Oh My Zsh + Powerlevel10k, sets the theme in <span class="k">~/.zshrc</span> (with backup), and optionally makes Zsh the default shell.</div></div></div>
+  <div class="step"><div class="step-n">6</div><div class="step-b"><div class="step-t">XFCE desktop</div>
+    <div class="step-d">Enables the x11 repository, installs XFCE4 and the termux-x11 launcher package, and checks whether the Termux:X11 companion app is present (Chapter 8).</div></div></div>
+
+  <p>At the end the script runs <span class="k">termux-reload-settings</span> so the new theme and
+  font apply without a reboot. Restart the app once for everything to settle, and you are done —
+  the rest of this guide is about using what you just installed.</p>
+
+  <!-- ============ 5 · Themes ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 5</div>
+    <div class="sec-title">Themes, your way</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>Termux Plus gives you <strong>three interchangeable ways</strong> to control the terminal's
+  colors, all sharing the same state — switch from the app, then confirm from the CLI, or vice
+  versa. Nothing is locked in, and nothing requires a rebuild.</p>
+
+  <h4 class="sub">Way 1 — the in-app picker</h4>
+  <p>Open <strong>Settings &rarr; Termux &rarr; Termux Plus &rarr; Terminal color scheme</strong>.
+  You get a radio list of every bundled scheme; picking one applies it immediately through the same
+  reload mechanism the external Termux:Styling app uses. The <strong>Reset to default</strong> entry
+  removes the custom colors and returns to the built-in scheme. (That external Styling app keeps
+  working too, by the way — same <span class="k">colors.properties</span> contract.)</p>
+
+  <h4 class="sub">Way 2 — the ttheme command</h4>
+  <div class="cmdrow"><div class="c">ttheme</div><div class="d">interactive picker with live truecolor swatches</div></div>
+  <div class="cmdrow"><div class="c">ttheme &lt;name&gt;</div><div class="d">apply a scheme instantly, e.g. <span class="k">ttheme dracula</span></div></div>
+  <div class="cmdrow"><div class="c">ttheme -l</div><div class="d">list all installed schemes</div></div>
+  <div class="cmdrow"><div class="c">ttheme -c</div><div class="d">show the current scheme</div></div>
+  <div class="cmdrow"><div class="c">ttheme -r</div><div class="d">remove colors.properties &rarr; built-in default colors</div></div>
+
+  <h4 class="sub">Way 3 — your own colors.properties</h4>
+  <p>Schemes are plain text files in <span class="k">~/.termux/termux-plus/themes/</span>. Drop any
+  <span class="k">.properties</span> file in there and it appears in both pickers automatically.
+  The format is a flat list of hex colors:</p>
+  <div class="code"><span class="cm"># ~/.termux/termux-plus/themes/my-theme.properties</span>
+<span class="cm"># termux-plus-theme: my-theme        &lt;- name marker (used by ttheme -c)</span>
+background=#1a1b26
+foreground=#c0caf5
+cursor=#c0caf5
+color0=#15161e      <span class="cm"># black</span>
+color1=#f7768e      <span class="cm"># red</span>
+<span class="cm"># ... color2 through color15: the classic 16 ANSI slots.</span>
+<span class="cm">#     8=bold-black, 9=bold-red, etc.</span></div>
+  <p>The active scheme is written to <span class="k">~/.termux/colors.properties</span> — that file
+  is the single source of truth Termux itself reads. If you edit it by hand, run
+  <span class="k">termux-reload-settings</span> (or just reopen the app) to apply it.</p>
+
+  <h4 class="sub">The bundled twelve</h4>
+  <table>
+    <colgroup><col style="width:26%"><col style="width:22%"><col style="width:52%"></colgroup>
+    <thead><tr><th>Scheme</th><th>Swatch</th><th>Vibe</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">tokyo-night</td><td><span class="sw" style="background:#1a1b26"></span><span class="sw" style="background:#c0caf5"></span><span class="sw" style="background:#7aa2f7"></span></td><td>Deep blue with glowing cyan/purple accents — the default</td></tr>
+      <tr><td class="mono">dracula</td><td><span class="sw" style="background:#282a36"></span><span class="sw" style="background:#f8f8f2"></span><span class="sw" style="background:#bd93f9"></span></td><td>The classic purple-saturated dark theme</td></tr>
+      <tr><td class="mono">catppuccin-mocha</td><td><span class="sw" style="background:#1e1e2e"></span><span class="sw" style="background:#cdd6f4"></span><span class="sw" style="background:#89b4fa"></span></td><td>Soft pastel warmths, easy on the eyes</td></tr>
+      <tr><td class="mono">nord</td><td><span class="sw" style="background:#2e3440"></span><span class="sw" style="background:#d8dee9"></span><span class="sw" style="background:#81a1c1"></span></td><td>Arctic, bluish, calm and low-contrast</td></tr>
+      <tr><td class="mono">gruvbox-dark</td><td><span class="sw" style="background:#282828"></span><span class="sw" style="background:#ebdbb2"></span><span class="sw" style="background:#458588"></span></td><td>Retro groove with organic, earthy tones</td></tr>
+      <tr><td class="mono">one-dark</td><td><span class="sw" style="background:#282c34"></span><span class="sw" style="background:#abb2bf"></span><span class="sw" style="background:#61afef"></span></td><td>The Atom editor look — balanced and neutral</td></tr>
+      <tr><td class="mono">monokai</td><td><span class="sw" style="background:#272822"></span><span class="sw" style="background:#f8f8f2"></span><span class="sw" style="background:#66d9ef"></span></td><td>Sublime Text's famous vivid scheme</td></tr>
+      <tr><td class="mono">solarized-dark</td><td><span class="sw" style="background:#002b36"></span><span class="sw" style="background:#839496"></span><span class="sw" style="background:#268bd2"></span></td><td>Lab-tested contrast ratios for long sessions</td></tr>
+      <tr><td class="mono">rose-pine-moon</td><td><span class="sw" style="background:#232136"></span><span class="sw" style="background:#e0def4"></span><span class="sw" style="background:#9ccfd8"></span></td><td>Natural, muted pine and rose hues</td></tr>
+      <tr><td class="mono">ayu-dark</td><td><span class="sw" style="background:#0a0e14"></span><span class="sw" style="background:#bfbdb6"></span><span class="sw" style="background:#53bdfa"></span></td><td>Darkest background of the set, orange-cyan pops</td></tr>
+      <tr><td class="mono">kanagawa</td><td><span class="sw" style="background:#1f1f28"></span><span class="sw" style="background:#dcd7ba"></span><span class="sw" style="background:#7e9cd8"></span></td><td>Inspired by The Great Wave — ink and sumi colors</td></tr>
+      <tr><td class="mono">github-dark</td><td><span class="sw" style="background:#0d1117"></span><span class="sw" style="background:#c9d1d9"></span><span class="sw" style="background:#79c0ff"></span></td><td>GitHub's own dark palette, familiar to coders</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ 6 · Fonts ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 6</div>
+    <div class="sec-title">Fonts</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>A terminal lives on its glyphs, and Termux Plus ships its font workflow around
+  <strong>Nerd Fonts</strong> — popular monospace fonts patched with thousands of extra icons:
+  folder and file-type icons for <span class="k">ls</span> plugins, Git branch symbols, powerline
+  arrows that Powerlevel10k uses to draw its segments. Without a Nerd Font those symbols render as
+  boxes; with one, your prompt and tooling turn into a proper dashboard.</p>
+
+  <p>The <span class="k">tfont</span> command handles everything. It downloads straight from the
+  official <span class="k">ryanoasis/nerd-fonts</span> releases, so fonts are always current:</p>
+
+  <div class="cmdrow"><div class="c">tfont</div><div class="d">interactive picker</div></div>
+  <div class="cmdrow"><div class="c">tfont &lt;name&gt;</div><div class="d">install &amp; apply, e.g. <span class="k">tfont jetbrains-mono</span></div></div>
+  <div class="cmdrow"><div class="c">tfont &lt;file.ttf&gt;</div><div class="d">install any .ttf you have on disk</div></div>
+  <div class="cmdrow"><div class="c">tfont -l</div><div class="d">list the catalog</div></div>
+  <div class="cmdrow"><div class="c">tfont -r</div><div class="d">remove font.ttf &rarr; Termux built-in font</div></div>
+
+  <p>The six curated families:</p>
+  <table>
+    <colgroup><col style="width:32%"><col style="width:68%"></colgroup>
+    <thead><tr><th>Name</th><th>Character</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">meslo</td><td>MesloLGS NF — the Powerlevel10k recommendation, installed by the setup wizard</td></tr>
+      <tr><td class="mono">jetbrains-mono</td><td>Crisp, tall x-height, made for code — this guide's own typeface</td></tr>
+      <tr><td class="mono">cascadia-code</td><td>Microsoft's terminal font, friendly curves with coding ligatures</td></tr>
+      <tr><td class="mono">fira-code</td><td>The ligature classic: <span class="k">!=</span> and <span class="k">-&gt;</span> become single glyphs</td></tr>
+      <tr><td class="mono">hack</td><td>Neutral and highly legible at small sizes</td></tr>
+      <tr><td class="mono">roboto-mono</td><td>Android's own mono — feels native on a phone</td></tr>
+    </tbody>
+  </table>
+
+  <p>Whatever you install lands in <span class="k">~/.termux/font.ttf</span>, which is the single
+  font slot Termux reads. Applying is automatic — <span class="k">tfont</span> calls
+  <span class="k">termux-reload-settings</span> for you.</p>
+
+  <!-- ============ 7 · The prompt ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 7</div>
+    <div class="sec-title">The prompt</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>The stock prompt — a shy <span class="k">~$</span> — tells you almost nothing. Termux Plus
+  replaces it with a two-layer upgrade. <strong>Oh My Zsh</strong> is a configuration framework for
+  the Z shell: it brings sensible defaults, hundreds of optional plugins (Git aliases, completions,
+  the works) and an easy theme system. <strong>Powerlevel10k</strong> is the theme that sits on top:
+  a fast, informative prompt that shows your directory, Git branch and status, command duration and
+  exit codes — rendered as colored segments with powerline arrows.</p>
+
+  <p>Because Termux's background is a solid color, P10k's segment colors are exactly where the
+  "gradient look" comes from: layered blues, greens and magentas building a prompt that reads like
+  a status bar.</p>
+
+  <p>The first time you start Zsh, the <strong>P10k configuration wizard</strong> launches
+  automatically. It asks a handful of questions — diamond and arrow glyphs (testing whether your
+  Nerd Font renders), prompt style (lean, classic, rainbow, pure), character set, icons, spacing —
+  and then writes a matched <span class="k">~/.p10k.zsh</span>. Answer honestly and you get a
+  prompt that fits your font and taste precisely.</p>
+
+  <div class="code"><span class="p">$</span> <span class="cm"># re-run the wizard anytime to restyle the prompt:</span>
+<span class="p">$</span> p10k configure</div>
+
+  <div class="note">
+    <span class="nt">Tip</span>
+    If the wizard's diamond and lock icons show as boxes, your active font is not a Nerd Font —
+    run <span class="k">tfont meslo</span> and restart the app before configuring. Your previous
+    <span class="k">~/.zshrc</span> is saved as <span class="k">~/.zshrc.termux-plus-backup</span>
+    if you ever want to go back.
+  </div>
+
+  <!-- ============ 8 · XFCE desktop ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 8</div>
+    <div class="sec-title">XFCE desktop</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>Termux can run complete graphical desktops, and Termux Plus makes it a one-command affair.
+  The piece most people miss is that it takes <strong>two components</strong>: the X11 packages
+  inside Termux (installed by the setup wizard) and the <strong>Termux:X11 companion Android
+  app</strong>, which acts as the actual screen. The companion app is Wayland-based under the hood
+  and bridges X11 clients into an Android window.</p>
+
+  <p>If the wizard did not find the companion app during setup, install it from
+  <a href="https://f-droid.org/en/packages/com.termux.x11/">F-Droid</a> or
+  <a href="https://github.com/termux/termux-x11/releases">GitHub releases</a> — one-time, ~10 MB.
+  Then from any Termux Plus session:</p>
+
+  <div class="code"><span class="p">$</span> start-desktop</div>
+
+  <p>The script starts the display bridge in the background, waits for it to come up, then launches
+  the XFCE session with <span class="k">DISPLAY=:0</span> so every desktop application draws into
+  the Termux:X11 window. Switch to that app and your desktop is there; from XFCE's terminal you can
+  install more GUI software the usual way, e.g. <span class="k">pkg install firefox</span>. To
+  leave, log out of the XFCE session or stop the bridge from Termux.</p>
+
+  <div class="note">
+    <span class="nt">Tips</span>
+    Audio inside the desktop needs PulseAudio:
+    <span class="k">pkg install pulseaudio &amp;&amp; pulseaudio --start --exit-idle-time=-1</span>.
+    And if you ever crave KDE or GNOME: they are not packaged for native Termux, but a
+    <span class="k">proot-distro</span> Debian running KDE/GNOME displayed through Termux:X11 is
+    the established route — the same <span class="k">start-desktop</span> pattern generalizes to it.
+  </div>
+
+  <!-- ============ 9 · Updating ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 9</div>
+    <div class="sec-title">Updating</div>
+    <div class="divider"></div>
+  </div>
+
+  <p>Two kinds of updates exist, and both are one-step. <strong>Getting a newer Termux Plus
+  build</strong> is simply installing the new APK over the old one — same signing key, same data:
+  your files, themes and configurations survive untouched. Watch the <strong>continuous</strong>
+  release, or any tag you build later.</p>
+
+  <p><strong>Moving to a newer upstream Termux</strong> is controlled by a single pinned commit in
+  the workflow file:</p>
+  <div class="code"><span class="cm"># .github/workflows/build-apk.yml</span>
+env:
+  TERMUX_APP_REF: 8629e632fcb95da272221be327db653fb24befe9</div>
+  <p>Either edit that SHA to a newer termux-app commit and push, or run the workflow manually:
+  <strong>Actions &rarr; Build Termux Plus APK &rarr; Run workflow</strong>, and type any upstream
+  branch, tag or SHA into the <span class="k">termux_app_ref</span> input. The build then applies
+  the overlay on top of that ref — a minute later there is a fresh APK with your customizations
+  riding on the new upstream code.</p>
+
+  <!-- ============ 10 · Troubleshooting ============ -->
+  <div class="chapter-header">
+    <div class="sec-tag">Chapter 10</div>
+    <div class="sec-title">Troubleshooting</div>
+    <div class="divider"></div>
+  </div>
+
+  <table>
+    <colgroup><col style="width:37%"><col style="width:63%"></colgroup>
+    <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Installer says "App not installed"</td><td>The official Termux (or a plugin app) is still present. Uninstall all of them first — back up with the Chapter 2 command.</td></tr>
+      <tr><td>Theme or font changes do nothing</td><td>Run <span class="k">termux-reload-settings</span>, or fully close and reopen the app. Check that the file is <span class="k">~/.termux/colors.properties</span> / <span class="k">~/.termux/font.ttf</span>.</td></tr>
+      <tr><td>Icons / prompt glyphs are boxes</td><td>Not a Nerd Font. Run <span class="k">tfont meslo</span> (or any catalog font), restart, then <span class="k">p10k configure</span>.</td></tr>
+      <tr><td><span class="k">pkg</span> errors, packages not found</td><td>Run <span class="k">termux-change-repo</span> and pick a different mirror, then <span class="k">pkg update</span>. Usually network/mirror flakiness.</td></tr>
+      <tr><td>Powerlevel10k wizard never appeared</td><td>Start it manually with <span class="k">p10k configure</span>. Make sure Zsh is running (<span class="k">echo $ZSH_THEME</span>).</td></tr>
+      <tr><td><span class="k">start-desktop</span> says the companion app is missing</td><td>Install the Termux:X11 Android app (F-Droid or GitHub releases), then run <span class="k">start-desktop</span> again.</td></tr>
+      <tr><td>Desktop is black / apps do not draw</td><td>The display bridge needs a moment; if it persists, re-run <span class="k">start-desktop</span> so it restarts the bridge cleanly. Keep Termux sessions alive in the background.</td></tr>
+      <tr><td>Custom theme does not show in the pickers</td><td>The file must be <span class="k">.properties</span> inside <span class="k">~/.termux/termux-plus/themes/</span> with a <span class="k"># termux-plus-theme:</span> marker line as its first line.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Still stuck? Every command from this guide also lives inside the commented scripts in the
+  <span class="k">setup/</span> directory of the repository — short and safe to read, which is
+  exactly the point of keeping Termux Plus an open overlay rather than a magic binary.</p>
+
+</div>
+
+<!-- ==================== ENDING ==================== -->
+<div class="ending">
+  <div class="end-glow"></div>
+  <div class="end-prompt">~$ exit &nbsp;<span style="color:#565f89">(for now)</span></div>
+  <div class="end-big">Enjoy your terminal.</div>
+  <div class="end-text">
+    Everything you saw here — the picker, the themes, the commands, the desktop — lives in one
+    small repository you can read, tweak and rebuild. Make it yours.
+  </div>
+  <div class="end-meta">
+    github.com/Tsundereplan/termux-plus<br>
+    Upstream: termux/termux-app (GPLv3) &middot; scripts &amp; docs: MIT<br>
+    Termux Plus is a personal customization build, not an official Termux product.
+  </div>
+</div>
+
+</body>
+</html>
